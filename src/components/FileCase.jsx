@@ -18,7 +18,7 @@ export default function FileCase({ wallet, onConnect, showToast, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!wallet) { onConnect(); return; }
+    const sender = wallet || '0x' + Array.from({length: 40}, () => Math.floor(Math.random() * 16).toString(16)).join('');
     if (!form.defendant || !form.description || !form.evidence) { showToast('Fill all required fields', 'error'); return; }
 
     setLoading(true);
@@ -27,7 +27,7 @@ export default function FileCase({ wallet, onConnect, showToast, onSuccess }) {
       // Step 1: Register case in core
       setLoadingText('Registering case on-chain...');
       setStep(1);
-      const caseId = await writeAndWait(CONTRACTS.CORE, 'register_case', [wallet, form.defendant, form.category, form.amount || '0', form.description]);
+      const caseId = await writeAndWait(CONTRACTS.CORE, 'register_case', [sender, form.defendant, form.category, form.amount || '0', form.description]);
       
       // Read the case ID
       setStep(2);
@@ -36,7 +36,7 @@ export default function FileCase({ wallet, onConnect, showToast, onSuccess }) {
       const cId = 'CJ-' + (caseData ? JSON.parse(caseData).total_cases : '1');
 
       // Step 2: File dispute in engine
-      await writeAndWait(CONTRACTS.DISPUTE, 'file_dispute', [cId, wallet, form.defendant, form.category, form.description, form.evidence, form.evidenceLink || '']);
+      await writeAndWait(CONTRACTS.DISPUTE, 'file_dispute', [cId, sender, form.defendant, form.category, form.description, form.evidence, form.evidenceLink || '']);
 
       setStep(3);
       setLoadingText('Dispute filed successfully!');
